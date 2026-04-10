@@ -210,3 +210,71 @@ textarea:focus{border-color:var(--purple);}
 
 @media print{.instr-bar,.print-btn,.chk,.final,.submit-wrap,.setup-banner{display:none!important;} body{background:white;} .ex{box-shadow:none;break-inside:avoid;}}
 @media(max-width:500px){.match-grid{grid-template-columns:1fr} .student-fields{grid-template-columns:1fr}}
+
+/* ─── TAB-WARNING OVERLAY ─── */
+#tab-warning-overlay{
+  position:fixed;inset:0;z-index:9999;
+  background:rgba(15,23,42,.75);backdrop-filter:blur(6px);
+  display:flex;align-items:center;justify-content:center;
+  padding:20px;
+  opacity:0;pointer-events:none;
+  transition:opacity .3s;
+}
+#tab-warning-overlay.tw-visible{opacity:1;pointer-events:all;}
+
+.tw-card{
+  background:white;border-radius:20px;padding:32px 28px;
+  max-width:440px;width:100%;text-align:center;
+  box-shadow:0 24px 60px rgba(0,0,0,.35);
+  animation:tw-pop .35s cubic-bezier(.34,1.56,.64,1);
+}
+.tw-card.tw-annulled{
+  background:linear-gradient(135deg,#1E0A0A,#450A0A);
+  border:2px solid #DC2626;
+}
+.tw-card.tw-annulled .tw-title{color:#FCA5A5;}
+.tw-card.tw-annulled .tw-msg{color:rgba(255,255,255,.8);}
+
+@keyframes tw-pop{
+  from{transform:scale(.85) translateY(20px);opacity:0}
+  to{transform:scale(1) translateY(0);opacity:1}
+}
+
+.tw-icon{font-size:52px;margin-bottom:12px;line-height:1;}
+.tw-title{font-family:'Fredoka One',cursive;font-size:22px;color:var(--red);margin-bottom:10px;}
+.tw-msg{font-size:14px;font-weight:600;color:var(--ink);line-height:1.6;margin-bottom:16px;}
+.tw-counter{
+  font-size:13px;font-weight:800;
+  padding:10px 14px;border-radius:10px;
+  background:var(--amber-l);color:var(--amber-d);
+  border:1.5px solid var(--amber);
+  margin-bottom:20px;line-height:1.5;
+}
+.tw-danger{color:var(--red);font-size:13px;font-weight:900;}
+.tw-btn{
+  display:inline-flex;align-items:center;justify-content:center;
+  gap:8px;padding:13px 24px;border-radius:12px;border:none;
+  background:var(--blue);color:white;
+  font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;
+  cursor:pointer;width:100%;transition:all .2s;
+}
+.tw-btn:hover{background:var(--blue-d);transform:translateY(-1px);}
+.tw-btn.tw-btn-annulled{background:var(--red);cursor:default;}
+.tw-btn.tw-btn-annulled:hover{transform:none;}
+
+/* ─── WARNING BADGE in instr-bar ─── */
+.warn-badge{
+  padding:5px 12px;border-radius:20px;font-size:11px;font-weight:900;
+  background:var(--amber-l);color:var(--amber-d);border:1.5px solid var(--amber);
+  white-space:nowrap;animation:tw-pop .3s;
+}
+.warn-badge.danger{background:var(--red-l);color:var(--red);border-color:var(--red);}
+.warn-badge.annulled{background:var(--red);color:white;border-color:#991B1B;}
+
+/* ─── ANNULLED BANNER ─── */
+#annulled-banner{
+  background:linear-gradient(135deg,#DC2626,#991B1B);
+  color:white;text-align:center;
+  padding:14px 20px;font-size:15px;font-weight:800;
+  letter-spacing:.5px;
+}

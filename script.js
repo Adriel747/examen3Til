@@ -1,4 +1,135 @@
 // ══════════════════════════════════════════════════════
+//  SISTEMA ANTI-TRAMPA · VIGILANCIA DE PESTAÑA
+// ══════════════════════════════════════════════════════
+
+const MAX_WARNINGS   = 3;   // Cambiar si quieres más o menos intentos
+let   warningCount   = 0;
+let   examAnnulled   = false;
+let   examSubmitted  = false;
+
+function buildWarningModal() {
+  const overlay = document.createElement('div');
+  overlay.id = 'tab-warning-overlay';
+
+  overlay.innerHTML = `
+    <div class="tw-card" id="tw-card">
+      <div class="tw-icon" id="tw-icon">⚠️</div>
+      <h2 class="tw-title" id="tw-title">¡Saliste del examen!</h2>
+      <p class="tw-msg" id="tw-msg"></p>
+      <div class="tw-counter" id="tw-counter"></div>
+      <button class="tw-btn" id="tw-btn" onclick="closeWarningModal()">Entendido, regreso al examen</button>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+}
+
+function showWarningModal() {
+  if (examSubmitted) return;          // Ya envió, no molestar
+  warningCount++;
+
+  const remaining = MAX_WARNINGS - warningCount;
+  const overlay   = document.getElementById('tab-warning-overlay');
+  const icon      = document.getElementById('tw-icon');
+  const title     = document.getElementById('tw-title');
+  const msg       = document.getElementById('tw-msg');
+  const counter   = document.getElementById('tw-counter');
+  const btn       = document.getElementById('tw-btn');
+  const card      = document.getElementById('tw-card');
+
+  if (warningCount >= MAX_WARNINGS) {
+    // ── EXAMEN ANULADO ──
+    examAnnulled = true;
+    card.classList.add('tw-annulled');
+    icon.textContent  = '🚫';
+    title.textContent = '¡Examen ANULADO!';
+    msg.textContent   = 'Saliste de la pestaña del examen demasiadas veces. Tu examen ha sido anulado automáticamente. Avisa a tu profesor.';
+    counter.textContent = '';
+    btn.textContent   = 'Cerrar';
+    btn.classList.add('tw-btn-annulled');
+    lockExam();
+  } else {
+    // ── ADVERTENCIA ──
+    card.classList.remove('tw-annulled');
+    icon.textContent  = warningCount === 1 ? '👀' : '🚨';
+    title.textContent = `¡Advertencia ${warningCount} de ${MAX_WARNINGS - 1}!`;
+    msg.innerHTML     = `Detectamos que <strong>cambiaste de pestaña o saliste del examen</strong>.<br>Esta acción está registrada.`;
+    btn.textContent   = 'Entendido, regreso al examen';
+    btn.classList.remove('tw-btn-annulled');
+
+    if (remaining === 1) {
+      counter.innerHTML = `<span class="tw-danger">⛔ Último intento — si vuelves a salir, el examen será ANULADO.</span>`;
+    } else {
+      counter.innerHTML = `Te quedan <strong>${remaining}</strong> oportunidad${remaining !== 1 ? 'es' : ''} antes de la anulación.`;
+    }
+  }
+
+  overlay.classList.add('tw-visible');
+
+  // Registrar en la barra de progreso
+  updateWarningBadge();
+}
+
+function closeWarningModal() {
+  const overlay = document.getElementById('tab-warning-overlay');
+  overlay.classList.remove('tw-visible');
+}
+
+function lockExam() {
+  // Deshabilitar todos los inputs, botones de ejercicio y el submit
+  document.querySelectorAll('input, textarea, button:not(#tw-btn)').forEach(el => {
+    el.disabled = true;
+  });
+  document.querySelectorAll('.mc-opt, .tf-b, .mi, .rchip').forEach(el => {
+    el.style.pointerEvents = 'none';
+    el.style.opacity = '0.4';
+  });
+
+  // Banner de anulación visible en la página
+  const banner = document.createElement('div');
+  banner.id = 'annulled-banner';
+  banner.innerHTML = '🚫 <strong>EXAMEN ANULADO</strong> — Contacta a tu profesor.';
+  document.querySelector('.instr-bar').after(banner);
+}
+
+function updateWarningBadge() {
+  let badge = document.getElementById('warning-badge');
+  if (!badge) {
+    badge = document.createElement('div');
+    badge.id = 'warning-badge';
+    document.querySelector('.instr-bar').appendChild(badge);
+  }
+  if (examAnnulled) {
+    badge.className = 'warn-badge annulled';
+    badge.textContent = '🚫 ANULADO';
+  } else {
+    badge.className = 'warn-badge' + (warningCount === MAX_WARNINGS - 1 ? ' danger' : '');
+    badge.textContent = `👁 Salidas: ${warningCount}/${MAX_WARNINGS - 1}`;
+  }
+}
+
+// ── Detectar cambio de pestaña / minimizar (desktop + mobile) ──
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden && !examAnnulled && !examSubmitted) {
+    showWarningModal();
+  }
+});
+
+// ── Fallback: blur de window (algunos móviles / navegadores) ──
+window.addEventListener('blur', () => {
+  if (!examAnnulled && !examSubmitted) {
+    // Solo disparar si la visibilidad no lo captó (evitar doble disparo)
+    if (!document.hidden) {
+      showWarningModal();
+    }
+  }
+});
+
+// ── Inicializar modal al cargar el DOM ──
+document.addEventListener('DOMContentLoaded', () => {
+  buildWarningModal();
+});
+
+// ══════════════════════════════════════════════════════
 //  ⬇  PROFESOR: PEGA AQUÍ tu URL de Google Apps Script
 // ══════════════════════════════════════════════════════
 const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxL12M8k_MCwKHXBntv3fuZB7oV848tUCQ1KlPLppfkHcUUdFaF0XwIj3m4oilDwaAGUQ/exec';
@@ -243,6 +374,7 @@ function submitExam() {
     body:    JSON.stringify(payload)
   })
   .then(() => {
+    examSubmitted = true;
     statusEl.className = 'submit-status sent';
     statusEl.textContent = '🎉 ¡Examen enviado correctamente! Bien hecho, ' + name + ' 👏';
     btn.textContent = '✅ Enviado';
